@@ -1,53 +1,139 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+
+public class Node
+{
+    public int Value { get; private set; }
+    public Node? Left { get; private set; }
+    public Node? Right { get; private set; }
+
+    public Node(int value)
+    {
+        Value = value;
+    }
+
+    public void Insert(int value)
+    {
+        if (value == Value)
+            return;  // Problem 1: reject duplicates
+
+        if (value < Value)
+        {
+            if (Left == null)
+                Left = new Node(value);
+            else
+                Left.Insert(value);
+        }
+        else
+        {
+            if (Right == null)
+                Right = new Node(value);
+            else
+                Right.Insert(value);
+        }
+    }
+
+    public bool Contains(int value)
+    {
+        if (value == Value)
+            return true;
+        if (value < Value)
+            return Left?.Contains(value) ?? false;
+        else
+            return Right?.Contains(value) ?? false;
+    }
+
+    public int GetHeight()
+    {
+        int leftH = Left?.GetHeight() ?? 0;
+        int rightH = Right?.GetHeight() ?? 0;
+        return 1 + Math.Max(leftH, rightH);
+    }
+}
+
+public class BinarySearchTree : IEnumerable<int>
+{
+    private Node? root;
+
+    public void Insert(int value)
+    {
+        if (root == null)
+            root = new Node(value);
+        else
+            root.Insert(value);
+    }
+
+    public bool Contains(int value)
+        => root?.Contains(value) ?? false;
+
+    public int GetHeight()
+        => root?.GetHeight() ?? 0;
+
+    public IEnumerable<int> Reverse()
+    {
+        var list = new List<int>();
+        TraverseBackward(root, list);
+        return list;
+    }
+
+    private void TraverseBackward(Node? node, IList<int> output)
+    {
+        if (node == null)
+            return;
+        TraverseBackward(node.Right, output);
+        output.Add(node.Value);
+        TraverseBackward(node.Left, output);
+    }
+
+    public override string ToString()
+    {
+        if (root == null)
+            return "<Bst>{}";
+        var list = this.ToList();
+        return "<Bst>{" + string.Join(", ", list) + "}";
+    }
+
+    public IEnumerator<int> GetEnumerator()
+    {
+        if (root != null)
+            foreach (var v in TraverseForward(root))
+                yield return v;
+    }
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    private IEnumerable<int> TraverseForward(Node node)
+    {
+        if (node.Left != null)
+            foreach (var v in TraverseForward(node.Left))
+                yield return v;
+        yield return node.Value;
+        if (node.Right != null)
+            foreach (var v in TraverseForward(node.Right))
+                yield return v;
+    }
+}
+
 public static class Trees
 {
-    /// <summary>
-    /// Given a sorted list (sorted_list), create a balanced BST.  If the values in the
-    /// sortedNumbers were inserted in order from left to right into the BST, then it
-    /// would resemble a linked list (unbalanced). To get a balanced BST, the
-    /// InsertMiddle function is called to find the middle item in the list to add
-    /// first to the BST. The InsertMiddle function takes the whole list but also takes
-    /// a range (first to last) to consider.  For the first call, the full range of 0 to
-    /// Length-1 used.
-    /// </summary>
     public static BinarySearchTree CreateTreeFromSortedList(int[] sortedNumbers)
     {
-        var bst = new BinarySearchTree(); // Create an empty BST to start with 
+        var bst = new BinarySearchTree();
+        if (sortedNumbers == null || sortedNumbers.Length == 0)
+            return bst;
         InsertMiddle(sortedNumbers, 0, sortedNumbers.Length - 1, bst);
         return bst;
     }
 
-    /// <summary>
-    /// This function will attempt to insert the item in the middle of 'sortedNumbers' into
-    /// the 'bst' tree. The middle is determined by using indices represented by 'first' and
-    /// 'last'.
-    /// For example, if the function was called on:
-    ///
-    /// sortedNumbers = new[]{10, 20, 30, 40, 50, 60};
-    /// first = 0;
-    /// last = 5;
-    /// 
-    /// then the value 30 (index 2 which is the middle) would be added 
-    /// to the 'bst' (the insert function in the <see cref="BinarySearchTree"/> can be used
-    /// to do this).   
-    ///
-    /// Subsequent recursive calls are made to insert the middle from the values 
-    /// before 30 and the values after 30.  If done correctly, the order
-    /// in which values are added (which results in a balanced bst) will be:
-    /// 
-    /// 30, 10, 20, 50, 40, 60
-    /// 
-    /// This function is intended to be called the first time by CreateTreeFromSortedList.
-    ///
-    /// The purpose for having the first and last parameters is so that we do 
-    /// not need to create new sub-lists when we make recursive calls.  Avoid 
-    /// using list slicing to create sub-lists to solve this problem.    
-    /// </summary>
-    /// <param name="sortedNumbers">input numbers that are already sorted</param>
-    /// <param name="first">the first index in the sortedNumbers to insert</param>
-    /// <param name="last">the last index in the sortedNumbers to insert</param>
-    /// <param name="bst">the BinarySearchTree in which to insert the values</param>
     private static void InsertMiddle(int[] sortedNumbers, int first, int last, BinarySearchTree bst)
     {
-        // TODO Start Problem 5
+        if (first > last)
+            return;
+
+        int mid = (first + last) / 2;
+        bst.Insert(sortedNumbers[mid]);
+        InsertMiddle(sortedNumbers, first, mid - 1, bst);
+        InsertMiddle(sortedNumbers, mid + 1, last, bst);
     }
 }
